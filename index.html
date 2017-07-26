@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="./index.css">
+  </head>
+  <body>
+    <label>Link</label>
+    <input type="text" id="Link" />
+    <label>Name</label>
+    <input type="text" id="Name" />
+    <input type="button" onclick="Call()" value="Suchen"/>
+    <div id="Content">
+      <table id="WebsiteTable">
+        <tr>
+          <th>Name</th>
+          <th>Website</th>
+          <th>Änderung?</th>
+        </tr>
+      </table>
+  </div>
+  </body>
+  <script>
+  const {ipcRenderer} = require('electron')
+
+  ipcRenderer.send('init');
+
+  ipcRenderer.on('page', (event, arg) => {
+    var table = document.getElementById('WebsiteTable')
+    var newrow = table.insertRow(table.rows.length)
+    var NameCell = newrow.insertCell(0)
+    NameCell.innerHTML = arg;
+  })
+
+  function Call(){
+    var info = {};
+    info.uri = document.getElementById('Link').value;
+    info.name = document.getElementById('Name').value;
+    ipcRenderer.send('search', info);
+  }
+  </script>
+</html>
