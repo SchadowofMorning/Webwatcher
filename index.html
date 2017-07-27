@@ -5,13 +5,19 @@
     <link rel="stylesheet" href="./index.css">
   </head>
   <body>
+    <label>Indexpfad</label>
+    <input type="text" id="Datapath" />
+  </br>
+  <div class="Controls">
     <label>Link</label>
     <input type="text" id="Link" />
     <label>Name</label>
     <input type="text" id="Name" />
     <input type="button" onclick="Call()" value="Suchen"/>
-    <div id="Content">
-      <table id="WebsiteTable">
+    <input type="button" onclick="Compare()" value="Vergleichen" class="Compare"/>
+  </div>
+    <div class="Content">
+      <table class="MainTable" id="MainTable">
         <tr>
           <th>Name</th>
           <th>Website</th>
@@ -24,19 +30,45 @@
   const {ipcRenderer} = require('electron')
 
   ipcRenderer.send('init');
+  ipcRenderer.on('SetupUser', (event, doc) => {
+    document.getElementById('Datapath').value = doc.DataPath;
+  })
+  ipcRenderer.on('update-false', (event, cell) =>{
+    console.log(cell);
+    var selectedcell = document.getElementById(cell);
+    selectedcell.innerHTML = "Keine Änderungen";
+    selectedcell.class = "negativ-cell";
 
-  ipcRenderer.on('page', (event, arg) => {
-    var table = document.getElementById('WebsiteTable')
+  })
+  ipcRenderer.on('update-true', (event, cell) =>{
+    var selectedcell = document.getElementById(cell);
+    selectedcell.innerHTML = "Änderung!";
+    selectedcell.class = "positiv-cell";
+  })
+  ipcRenderer.on('page', (event, page) => {
+    var table = document.getElementById('MainTable')
     var newrow = table.insertRow(table.rows.length)
     var NameCell = newrow.insertCell(0)
-    NameCell.innerHTML = arg;
+    var LinkCell = newrow.insertCell(1)
+    var ChangesCell = newrow.insertCell(2)
+    NameCell.innerHTML = page.Name;
+    LinkCell.innerHTML = page.URL;
+    if(page.Changes){
+      ChangesCell.innerHTML = page.Changes;
+      ChangesCell.id = page.Name + "-changescell";
+    } else {
+      ChangesCell.innerHTML = "Neu";
+      ChangesCell.id = page.Name + "-changescell";
+    }
   })
-
+  function Compare(){
+    ipcRenderer.send('compare');
+  }
   function Call(){
     var info = {};
     info.uri = document.getElementById('Link').value;
     info.name = document.getElementById('Name').value;
-    ipcRenderer.send('search', info);
+    ipcRenderer.send('save', info);
   }
   </script>
 </html>

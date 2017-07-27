@@ -1,0 +1,21 @@
+{
+  "name": "webwatcher",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": "https://github.com/SchadowofMorning/Webwatcher",
+  "author": "SchadowofMorning",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "~1.6.2",
+    "electron-builder": "^19.6.3",
+    "electron-packager": "^8.1.0"
+  },
+  "dependencies": {
+    "nedb": "^1.8.0",
+    "request": "^2.81.0"
+  }
+}
