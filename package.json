@@ -4,10 +4,11 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "/node_modules/.bin/electron-builder --project 'X:/Projects/Webwatcher/Webwatcher' --win --x64"
   },
   "repository": "https://github.com/SchadowofMorning/Webwatcher",
-  "author": "SchadowofMorning",
+  "author": "Shura",
   "license": "MIT",
   "devDependencies": {
     "electron": "~1.6.2",
@@ -15,6 +16,8 @@
     "electron-packager": "^8.1.0"
   },
   "dependencies": {
+    "fs-jetpack": "^1.1.0",
+    "jquery": "^3.2.1",
     "nedb": "^1.8.0",
     "request": "^2.81.0"
   }

@@ -11,8 +11,9 @@ th {
 td {
   border: 2px solid black;
 }
-.Controls {
+#Controls {
   margin: 10px;
+  display: block;
 }
 .Content {
   padding: 20px;

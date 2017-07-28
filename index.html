@@ -5,15 +5,16 @@
     <link rel="stylesheet" href="./index.css">
   </head>
   <body>
-    <label>Indexpfad</label>
-    <input type="text" id="Datapath" />
+    <label>Seitenpfad</label>
+    <strong id="DataPath"></label>
+    <input type="button" id="DataPathInput" value="Ordner wählen" />
   </br>
   <div class="Controls">
     <label>Link</label>
     <input type="text" id="Link" />
     <label>Name</label>
     <input type="text" id="Name" />
-    <input type="button" onclick="Call()" value="Suchen"/>
+    <input type="button" onclick="Save()" value="Hinzufügen"/>
     <input type="button" onclick="Compare()" value="Vergleichen" class="Compare"/>
   </div>
     <div class="Content">
@@ -27,11 +28,15 @@
   </div>
   </body>
   <script>
+  var $ = require('jquery');
   const {ipcRenderer} = require('electron')
-
+  $('#DataPathInput').click(function(){
+    ipcRenderer.send('update-config');
+    $('#Controls').attr("display", "block");
+  })
   ipcRenderer.send('init');
-  ipcRenderer.on('SetupUser', (event, doc) => {
-    document.getElementById('Datapath').value = doc.DataPath;
+  ipcRenderer.on('SetPath', (event, path) => {
+  $('#Datapath').text(path);
   })
   ipcRenderer.on('update-false', (event, cell) =>{
     console.log(cell);
@@ -46,6 +51,7 @@
     selectedcell.class = "positiv-cell";
   })
   ipcRenderer.on('page', (event, page) => {
+    console.log(page);
     var table = document.getElementById('MainTable')
     var newrow = table.insertRow(table.rows.length)
     var NameCell = newrow.insertCell(0)
@@ -64,10 +70,10 @@
   function Compare(){
     ipcRenderer.send('compare');
   }
-  function Call(){
+  function Save(){
     var info = {};
-    info.uri = document.getElementById('Link').value;
-    info.name = document.getElementById('Name').value;
+    info.URL = $('#Link').val();
+    info.Name = $('#Name').val();
     ipcRenderer.send('save', info);
   }
   </script>
