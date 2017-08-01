@@ -5,24 +5,27 @@
     <link rel="stylesheet" href="./index.css">
   </head>
   <body>
-    <label>Seitenpfad</label>
-    <strong id="DataPath"></label>
-    <input type="button" id="DataPathInput" value="Ordner wählen" />
   </br>
   <div class="Controls">
     <label>Link</label>
     <input type="text" id="Link" />
     <label>Name</label>
     <input type="text" id="Name" />
-    <input type="button" onclick="Save()" value="Hinzufügen"/>
-    <input type="button" onclick="Compare()" value="Vergleichen" class="Compare"/>
+    <input type="button" id="SaveButton" class="controlbutton" value="Hinzufügen"/>
+  </br>
+    <label id="ErrorTxt" style="color:red;"></label>
   </div>
     <div class="Content">
+      <input type="button" onclick="ipcRenderer.send('compare')" class="controlbutton" value="Vergleichen"/>
+    </br>
+    </br>
       <table class="MainTable" id="MainTable">
         <tr>
           <th>Name</th>
           <th>Website</th>
           <th>Änderung?</th>
+          <th>Datum</th>
+          <th>Löschen</th>
         </tr>
       </table>
   </div>
@@ -35,15 +38,14 @@
     $('#Controls').attr("display", "block");
   })
   ipcRenderer.send('init');
-  ipcRenderer.on('SetPath', (event, path) => {
-  $('#Datapath').text(path);
+  ipcRenderer.on('save-error', (event, message) => {
+  $('#Datapath').text(message);
   })
   ipcRenderer.on('update-false', (event, cell) =>{
     console.log(cell);
     var selectedcell = document.getElementById(cell);
     selectedcell.innerHTML = "Keine Änderungen";
     selectedcell.class = "negativ-cell";
-
   })
   ipcRenderer.on('update-true', (event, cell) =>{
     var selectedcell = document.getElementById(cell);
@@ -54,27 +56,46 @@
     console.log(page);
     var table = document.getElementById('MainTable')
     var newrow = table.insertRow(table.rows.length)
+    newrow.id = page.Name + "-row";
     var NameCell = newrow.insertCell(0)
     var LinkCell = newrow.insertCell(1)
     var ChangesCell = newrow.insertCell(2)
+    var DateCell = newrow.insertCell(3)
+    var DeleteCell = newrow.insertCell(4)
     NameCell.innerHTML = page.Name;
     LinkCell.innerHTML = page.URL;
-    if(page.Changes){
-      ChangesCell.innerHTML = page.Changes;
+    d = new Date(page.Date);
+    DateCell.innerHTML = d.getDay() + "/" + d.getMonth() + "/" + d.getFullYear();
+    DateCell.id = page.Name + "-datecell";
+    var DeleteButton = document.createElement('button');
+    DeleteButton.setAttribute('onclick', "remove(" + page.Name + ")")
+    DeleteButton.innerHTML = "Löschen";
+    DeleteCell.appendChild(DeleteButton);
+    if(page.Changes == true){
+      ChangesCell.innerHTML = "Änderung"
       ChangesCell.id = page.Name + "-changescell";
     } else {
-      ChangesCell.innerHTML = "Neu";
+      ChangesCell.innerHTML = "Keine Änderung";
       ChangesCell.id = page.Name + "-changescell";
     }
   })
-  function Compare(){
-    ipcRenderer.send('compare');
-  }
-  function Save(){
+  $("#SaveButton").click(function(){
     var info = {};
     info.URL = $('#Link').val();
     info.Name = $('#Name').val();
-    ipcRenderer.send('save', info);
+    if(info.URL == "" || info.Name == ""){
+      $('#ErrorTxt').text('Kein Link oder Name')
+    } else {
+      if(info.URL.startsWith("http://" || "https://")){
+              ipcRenderer.send('save', info);
+      } else {
+        info.URL = "http://" + info.URL;
+        ipcRenderer.send('save', info);
+      }
+    }
+  })
+  function remove(Name){
+    ipcRenderer.send('remove', Name);
   }
   </script>
 </html>

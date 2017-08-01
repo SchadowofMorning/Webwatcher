@@ -10,90 +10,116 @@ const fs = require('fs')
 const jetpack = require('fs-jetpack');
 const http = require('http')
 var DataStore = require('nedb')
-const request = require('request')
+const request = require('then-request')
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 let $ = require('jquery');
 
 //Data Storage
-var DataPath = "./";
-var index = new DataStore({filename: DataPath + "/index", autoload: true});
+var DataPath = app.getPath('documents');
+var index = new DataStore({filename: DataPath + "/savedpages/index", autoload: true});
 //Logic
-ipcMain.on('update-config', (event, path) =>{
-
-  dialog.showOpenDialog({properties:['openDirectory']}, function(folderPath){
-    index.update({type:"UserSettings"}, {$set: {DataPath: folderPath}}, function(err, updateconf){
-      if(err) throw err;
-    })
-    console.log(folderPath);
-    event.sender.send('SetPath', folderPath);
-    DataPath = folderPath;
-  })
+ipcMain.on('remove', (event, name) => {
+  Delete(name);
+  event.sender.send('removed-doc', name);
 })
-ipcMain.on('save', (event, page) =>{
-    /*var html = request(page.URL);
-    console.log(html);
-        jetpack.write("./" + page.Name + ".html", html)
-*/
-    request.get(page.URL).pipe(jetpack.createWriteStream('./savedpages/' + page.Name + '.html'))
-    var insertjson = {
-      "Changes": false,
-      "type": "website"
+ipcMain.on('save', (event, page) => {
+  index.findOne({"Name": page.Name}, function(err, doc){
+    if(doc){
+      event.sender.send('doc-exists')
+    } else {
+      Save(page, function(insertjson){
+      event.sender.send('page', insertjson)
+      });
     }
-    insertjson.Name = page.Name;
-    insertjson.URL = page.URL;
-    index.insert(insertjson);
-    event.sender.send('page', insertjson)
   })
+  })
+
+
 ipcMain.on('compare', (event, arg) => {
   index.find({"type":"website"}, function(err, docs){
     for(i = 0; i < docs.length; i++){
-      var cdoc = docs[i];
-      var data = fs.readFileSync("./savedpages/" + cdoc.Name + ".html");
-        var page = request(cdoc.URL, function(err, resp, body){
-          console.log(body);
-          if(data == body){
-            index.update({_id: cdoc.ID}, {$set: {Changes:false}}, function(err, updateval){
-              if(err) throw err;
-              event.sender.send('update-false', cdoc.Name + "-changescell")
-            })
-          } else {
-            index.update({_id: cdoc.ID}, {$set: {Changes:true}}, function(err, updateval){
-              if(err) throw err;
-              event.sender.send('update-true', cdoc.Name + "-changescell")
-            })
-          }
-          })
-
-    }
-  })
-})
-ipcMain.on('init', (event, arg) => {
-
-  index.find({type:"UserSettings"}, function(err, docs){
-      if(docs.length == 0){
-        index.insert({type:"UserSettings", DataPath:"./"})
-      } else {
-        event.sender.send('SetPath', docs.DataPath)
+      Compare(docs[i], function(val, name){
+        if(val == true){
+          event.sender.send('update-true', name + "-changescell")
+        } else {
+          event.sender.send('update-false', name + "-changescell")
+        }
+      })
       }
+    })
   })
+ipcMain.on('init', (event, arg) => {
+  jetpack.dir(DataPath + "/savedpages")
   index.find({type:"website"}, function(err, docs){
     if(err) throw err;
     for(i = 0; i < docs.length; i++){
       event.sender.send('page', docs[i]);
     }
   })
-
-
-
-
 })
 //End Logic
+//Functions
+function Delete(name){
+  index.remove({"type":"website", "Name": name}, {}, function(err, numRemoved){
+    if(err) throw err;
+    console.log("Entry Removed:" + name);
+  })
+}
+function Save(page, cb){
+  request('GET', page.URL).done(function(res) {
+    jetpack.write(DataPath + '/savedpages/' + page.Name + '.html', res.getBody());
+    var insertjson = {
+      "Changes": false,
+      "type": "website"
+    }
+    insertjson.Date = Date();
+    insertjson.Name = page.Name;
+    insertjson.URL = page.URL;
+    index.insert(insertjson);
+    cb(insertjson);
+  })
+}
+function Search(doc, searcharray, callback){
+  request('GET', doc.URL).done(function(res){
+    data = fs.readFileSync(DataPath + "/savedpages/" + doc.Name + ".html", 'utf8')
+    for(i = 0; i < searcharray.length; i++){
+      if(data.search(searcharray[i]) > -1){
+        callback(false);
+      } else {
+        callback(true);
+      }
+    }
+  })
+}
+function Compare(doc, cb){
+  request('GET', doc.URL).done(function(res) {
+    data = jetpack.read(DataPath + "/savedpages/" + doc.Name + ".html", 'utf8');
+    if(data == res.getBody()){
+      index.update({"Name": doc.Name}, {$set: {Changes:false}}, function(err, updateval){
+        if(err) throw err;
+        console.log(doc.Name);
+        cb(false, doc.Name);
+      })
+    } else {
+      index.update({"Name": doc.Name}, {$set: {Changes:true}}, function(err, updateval){
+        if(err) throw err;
+        console.log(doc.Name);
+        cb(true, doc.Name);
+        request('GET', doc.URL).done(function(result){
+          jetpack.remove(DataPath + "/savedpages/" + doc.Name + ".html")
+          jetpack.write(DataPath + '/savedpages/' + doc.Name + '.html', result.getBody());
+        })
+      })
+    }
+  })
+}
 
+//End Functions
 function createWindow () {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 600, icon:"./Webwatcher.ico"})
+  mainWindow = new BrowserWindow({width: 600, height: 600, icon:"./Webwatcher.ico"})
   mainWindow.$ = $;
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({
