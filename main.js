@@ -15,19 +15,22 @@ const request = require('then-request')
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
 let $ = require('jquery');
-
+var SearchStringExists = false;
 //Data Storage
 var DataPath = app.getPath('documents');
 var index = new DataStore({filename: DataPath + "/savedpages/index", autoload: true});
-//Logic
+//Events
+
+//Remove Document Event
 ipcMain.on('remove', (event, name) => {
   Delete(name);
   event.sender.send('removed-doc', name);
 })
+//Save Document Event
 ipcMain.on('save', (event, page) => {
   index.findOne({"Name": page.Name}, function(err, doc){
     if(doc){
-      event.sender.send('doc-exists')
+      event.sender.send('error-msg', 'Name bereits vergeben');
     } else {
       Save(page, function(insertjson){
       event.sender.send('page', insertjson)
@@ -35,8 +38,44 @@ ipcMain.on('save', (event, page) => {
     }
   })
   })
+  //Save Search String Event
+  ipcMain.on('save-search', (event, searchstr) => {
+    var searchstring = searchstr;
+    index.findOne({type:"searchobject"}, function(err, res){
+      if(err) throw err;
+      if(res){
+        index.update({_id: res._id}, {$set: {"SearchString": searchstring} }, function(err, numReplaced){
+          if(err) throw err;
+          console.log(numReplaced);
+        })
+      } else {
+        index.insert({"type":"searchobject", "SearchString": searchtring});
+        console.log(searchstr);
+      }
+    })
+  })
 
+  //Search Event
+ipcMain.on('search', (event, arg) => {
+  index.find({"type":"website"}, function(err, results){
 
+    if(err) throw err;
+    for(i=0; i < results.length; i++ ){
+      console.log(results[i]);
+      var doc = results[i];
+      Search(doc, function(hits){
+        if(hits === false){
+          event.sender.send("hit", "Die Suchwerte müssen erst gespeichert werden");
+        } else {
+          doc.hits = hits;
+          event.sender.send('hit', doc);
+          }
+        })
+
+    }
+  })
+})
+//Compare Event
 ipcMain.on('compare', (event, arg) => {
   index.find({"type":"website"}, function(err, docs){
     for(i = 0; i < docs.length; i++){
@@ -50,6 +89,7 @@ ipcMain.on('compare', (event, arg) => {
       }
     })
   })
+//Initialization Event
 ipcMain.on('init', (event, arg) => {
   jetpack.dir(DataPath + "/savedpages")
   index.find({type:"website"}, function(err, docs){
@@ -58,10 +98,14 @@ ipcMain.on('init', (event, arg) => {
       event.sender.send('page', docs[i]);
     }
   })
+  index.findOne({type:"searchobject"}, function(err, doc){
+    event.sender.send('searchobject', doc.SearchString);
+  })
 })
-//End Logic
+//End Events
 //Functions
 function Delete(name){
+  jetpack.remove(DataPath + "/savedpages/" + name + ".html");
   index.remove({"type":"website", "Name": name}, {}, function(err, numRemoved){
     if(err) throw err;
     console.log("Entry Removed:" + name);
@@ -81,16 +125,33 @@ function Save(page, cb){
     cb(insertjson);
   })
 }
-function Search(doc, searcharray, callback){
+function Search(doc, callback){
+  var data;
+  var searcharray;
   request('GET', doc.URL).done(function(res){
-    data = fs.readFileSync(DataPath + "/savedpages/" + doc.Name + ".html", 'utf8')
-    for(i = 0; i < searcharray.length; i++){
-      if(data.search(searcharray[i]) > -1){
+    data = String(res.getBody());
+    data = data.toLowerCase();
+    index.findOne({"type":"searchobject"}, function(err, searchdoc){
+      if(err) throw err;
+      if(searchdoc == null){
+        console.log("Creating Entry:SearchString");
+        index.insert({"type":"searchobject","SearchString":""});
         callback(false);
       } else {
-        callback(true);
+        searcharray = searchdoc.SearchString.toLowerCase().split(",");
+        console.log("searcharray:" + searcharray);
+        for(i = 0; i < searcharray.length; i++){
+          var searchresult = data.search(searcharray[i]);
+          console.log("word:" + searcharray[i]);
+          console.log("times:" + searchresult);
+          if(searchresult > -1){
+            callback(true);
+          } else {
+            callback(0);
+          }
+        }
       }
-    }
+    })
   })
 }
 function Compare(doc, cb){

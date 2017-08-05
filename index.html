@@ -24,10 +24,20 @@
           <th>Name</th>
           <th>Website</th>
           <th>Änderung?</th>
+          <th>Suchtreffer</th>
           <th>Datum</th>
           <th>Löschen</th>
         </tr>
       </table>
+      </div>
+      <div class="SearchArea">
+      <label style="font-size:18px">Wörter mit komma trennen</label>
+    </br>
+      <textarea id="SearchStringTextBox" rows="6" cols="30">
+      </textarea>
+    </br>
+      <input type="button" class="controlbutton" id="SearchButton" value="Suchen" />
+      <input type="button" class="controlbutton" id="SearchSaveButton" value="Speichern" />
   </div>
   </body>
   <script>
@@ -38,8 +48,28 @@
     $('#Controls').attr("display", "block");
   })
   ipcRenderer.send('init');
-  ipcRenderer.on('save-error', (event, message) => {
-  $('#Datapath').text(message);
+  ipcRenderer.on('error-msg', (event, message) => {
+  $('#ErrorTxt').text(message);
+  })
+  ipcRenderer.on('searchobject', (event, message) => {
+    console.log(message);
+  $('#SearchStringTextBox').text(message);
+  })
+  ipcRenderer.on('hit', (event, doc) => {
+    console.log(doc);
+    var cellname = "#" + doc.Name + "-hitcell";
+    if(doc.hits === true){
+      $(cellname).text("Treffer!");
+      $(cellname).attr("style", "background-color: green;")
+    }
+    if(doc.hits === 0){
+      $(cellname).text("Kein Treffer.");
+      $(cellname).attr("style", "background-color: yellow;")
+    }
+  })
+  ipcRenderer.on('removed-doc', (event, name) =>{
+    name = '#' + name + '-row';
+    $(name).remove();
   })
   ipcRenderer.on('update-false', (event, cell) =>{
     console.log(cell);
@@ -52,7 +82,7 @@
     selectedcell.innerHTML = "Änderung!";
     selectedcell.class = "positiv-cell";
   })
-  ipcRenderer.on('page', (event, page) => {
+  ipcRenderer.on('page', (event, page) => { //Hell
     console.log(page);
     var table = document.getElementById('MainTable')
     var newrow = table.insertRow(table.rows.length)
@@ -60,15 +90,18 @@
     var NameCell = newrow.insertCell(0)
     var LinkCell = newrow.insertCell(1)
     var ChangesCell = newrow.insertCell(2)
-    var DateCell = newrow.insertCell(3)
-    var DeleteCell = newrow.insertCell(4)
+    var HitCell = newrow.insertCell(3)
+    var DateCell = newrow.insertCell(4)
+    var DeleteCell = newrow.insertCell(5)
     NameCell.innerHTML = page.Name;
-    LinkCell.innerHTML = page.URL;
+    LinkCell.innerHTML = "<a href='" + page.URL + "'>" + page.URL + "</a>";
+    HitCell.id = page.Name + "-hitcell";
+    HitCell.innerHTML = 0;
     d = new Date(page.Date);
     DateCell.innerHTML = d.getDay() + "/" + d.getMonth() + "/" + d.getFullYear();
     DateCell.id = page.Name + "-datecell";
     var DeleteButton = document.createElement('button');
-    DeleteButton.setAttribute('onclick', "remove(" + page.Name + ")")
+    DeleteButton.setAttribute('onclick', "remove('" + page.Name + "')")
     DeleteButton.innerHTML = "Löschen";
     DeleteCell.appendChild(DeleteButton);
     if(page.Changes == true){
@@ -93,6 +126,13 @@
         ipcRenderer.send('save', info);
       }
     }
+  })
+  $("#SearchButton").click(function(){
+    ipcRenderer.send('search')
+  })
+  $("#SearchSaveButton").click(function(){
+    var SearchString = $("#SearchStringTextBox").val();
+    ipcRenderer.send('save-search', SearchString)
   })
   function remove(Name){
     ipcRenderer.send('remove', Name);
