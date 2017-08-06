@@ -99,9 +99,14 @@ ipcMain.on('init', (event, arg) => {
     }
   })
   index.findOne({type:"searchobject"}, function(err, doc){
-    event.sender.send('searchobject', doc.SearchString);
+    if(doc == null){
+      index.insert({type:"searchobject"});
+    } else {
+      event.sender.send('searchobject', doc.SearchString);
+    }
   })
 })
+
 //End Events
 //Functions
 function Delete(name){
@@ -180,11 +185,11 @@ function Compare(doc, cb){
 //End Functions
 function createWindow () {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 600, height: 600, icon:"./Webwatcher.ico"})
+  mainWindow = new BrowserWindow({width: 1140, height: 600, icon:"./Webwatcher.ico", frame: false})
   mainWindow.$ = $;
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({
-    pathname: path.join(__dirname, 'index.html'),
+    pathname: path.join(__dirname, '/webapp/index.html'),
     protocol: 'file:',
     slashes: true
   }))

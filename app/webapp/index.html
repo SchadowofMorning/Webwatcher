@@ -1,25 +1,33 @@
 <!DOCTYPE html>
 <html>
-  <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="./css/photon.css">
     <link rel="stylesheet" href="./index.css">
-  </head>
-  <body>
-  </br>
-  <div class="Controls">
-    <label>Link</label>
-    <input type="text" id="Link" />
-    <label>Name</label>
-    <input type="text" id="Name" />
-    <input type="button" id="SaveButton" class="controlbutton" value="Hinzufügen"/>
-  </br>
-    <label id="ErrorTxt" style="color:red;"></label>
+<body>
+  <div class="window">
+  <header class="toolbar toolbar-header">
+    <h1 class="title">WebWatcher</h1>
+  </header>
+  <div class="window-content">
+    <div class="pane-group">
+  <div class="pane-sm sidebar">
+    <div class="form-group">
+      <label>Link</label>
+      <input type="text" class="form-control" id="Link" />
+    </div>
+    <div class="form-group">
+      <label>Name</label>
+      <input type="text" class="form-control" id="Name" />
+    </div>
+  <div class="form-group">
+    <input type="button" id="SaveButton" class="btn btn-positive" value="Hinzufügen"/>
+    <p id="ErrorTxt" style="color:red;"></p>
+    <input type="button" onclick="ipcRenderer.send('compare')" class="btn btn-warning" value="Vergleichen"/>
   </div>
-    <div class="Content">
-      <input type="button" onclick="ipcRenderer.send('compare')" class="controlbutton" value="Vergleichen"/>
-    </br>
-    </br>
-      <table class="MainTable" id="MainTable">
+  </div>
+    <div class="pane">
+      <table class="table-striped" id="MainTable">
+        <thead>
         <tr>
           <th>Name</th>
           <th>Website</th>
@@ -28,21 +36,30 @@
           <th>Datum</th>
           <th>Löschen</th>
         </tr>
+      </thead>
+      <tbody>
+      </tbody>
       </table>
       </div>
-      <div class="SearchArea">
-      <label style="font-size:18px">Wörter mit komma trennen</label>
+      <div class="pane-sm sidebar">
+      <h5>Wörter mit komma trennen</h5>
     </br>
-      <textarea id="SearchStringTextBox" rows="6" cols="30">
+      <textarea id="SearchStringTextBox" rows="6" class="form-control">
       </textarea>
     </br>
-      <input type="button" class="controlbutton" id="SearchButton" value="Suchen" />
-      <input type="button" class="controlbutton" id="SearchSaveButton" value="Speichern" />
+      <input type="button" class="btn btn-positive" id="SearchButton" value="Suchen" />
   </div>
+</div>
+</div> <!--- window-content --->
+<div class="toolbar toolbar-footer">
+  <input type="button" class="btn btn-large btn-negative pull-right" id="CloseButton" value="Schließen" />
+</div>
+</div> <!--- window --->
   </body>
   <script>
   var $ = require('jquery');
   const {ipcRenderer} = require('electron')
+  const remote = require('electron').remote;
   $('#DataPathInput').click(function(){
     ipcRenderer.send('update-config');
     $('#Controls').attr("display", "block");
@@ -102,6 +119,7 @@
     DateCell.id = page.Name + "-datecell";
     var DeleteButton = document.createElement('button');
     DeleteButton.setAttribute('onclick', "remove('" + page.Name + "')")
+    DeleteButton.setAttribute('class', "btn btn-negative")
     DeleteButton.innerHTML = "Löschen";
     DeleteCell.appendChild(DeleteButton);
     if(page.Changes == true){
@@ -126,13 +144,15 @@
         ipcRenderer.send('save', info);
       }
     }
-  })
+   })
   $("#SearchButton").click(function(){
-    ipcRenderer.send('search')
+    var SaveString = $("#SearchStringTextBox").val();
+    ipcRenderer.send('save-search', SaveString)
+    ipcRenderer.send('search');
   })
-  $("#SearchSaveButton").click(function(){
-    var SearchString = $("#SearchStringTextBox").val();
-    ipcRenderer.send('save-search', SearchString)
+  $("#CloseButton").click(function(){
+    var window = remote.getCurrentWindow();
+        window.close();
   })
   function remove(Name){
     ipcRenderer.send('remove', Name);

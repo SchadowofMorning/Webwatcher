@@ -1,0 +1,21 @@
+.negativ-cell {
+  background-color: #ff1a1a;
+}
+.positiv-cell {
+  background-color: #00b300;
+}
+.controlbutton {
+  padding: 5px 5px 5px 5px;
+  display:inline-block;
+  font-size: 12px;
+  background-color: #00b3b3;
+  border: none;
+  color: white;
+}
+table {
+  table-layout: auto;
+  width: auto;
+}
+html {
+  border-radius: 10px;
+}
