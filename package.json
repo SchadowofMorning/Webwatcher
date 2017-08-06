@@ -25,7 +25,6 @@
     "then-request": "^4.1.0"
   },
   "build": {
-    "appId": "de.pauloldenburg.webwatcher",
-    "app-category-type": "public.app-category.productivity"
+    "appId": "de.pauloldenburg.webwatcher"
   }
 }
