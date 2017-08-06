@@ -5,7 +5,9 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "/node_modules/.bin/electron-builder --project 'X:/Projects/Webwatcher/Webwatcher' --win --x64"
+    "dist": "build",
+	  "dist-x": "build -ml",
+	  "release": "build"
   },
   "repository": "https://github.com/SchadowofMorning/Webwatcher",
   "author": "Shura",
@@ -21,5 +23,9 @@
     "nedb": "^1.8.0",
     "request": "^2.81.0",
     "then-request": "^4.1.0"
-}
+  },
+  "build": {
+    "appId": "de.pauloldenburg.webwatcher",
+    "app-category-type": "public.app-category.productivity"
+  }
 }
