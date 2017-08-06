@@ -1,0 +1,13 @@
+{
+  "name": "webwatcher",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "dependencies": {
+    "fs-jetpack": "^1.1.0",
+    "jquery": "^3.2.1",
+    "nedb": "^1.8.0",
+    "request": "^2.81.0",
+    "then-request": "^4.1.0"
+}
+}
