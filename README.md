@@ -7,6 +7,9 @@ feel free to commit.
 ## releases
 
 windows: setting up AppVeyor right now.
+
 mac osx: travis build it, couldnt test it, gonna do tomorrow.
+
 linux: same as mac.
+
 https://github.com/SchadowofMorning/Webwatcher/releases
