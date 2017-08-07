@@ -58,16 +58,15 @@ ipcMain.on('save', (event, page) => {
   //Search Event
 ipcMain.on('search', (event, arg) => {
   index.find({"type":"website"}, function(err, results){
-
     if(err) throw err;
+    var doc = {};
     for(i=0; i < results.length; i++ ){
-      console.log(results[i]);
-      var doc = results[i];
-      Search(doc, function(hits){
+      Search(results[i], function(name, hits){
         if(hits === false){
           event.sender.send("hit", "Die Suchwerte müssen erst gespeichert werden");
         } else {
           doc.hits = hits;
+          doc.Name = name;
           event.sender.send('hit', doc);
           }
         })
@@ -150,9 +149,9 @@ function Search(doc, callback){
           console.log("word:" + searcharray[i]);
           console.log("times:" + searchresult);
           if(searchresult > -1){
-            callback(true);
+            callback(doc.Name, true);
           } else {
-            callback(0);
+            callback(doc.Name, 0);
           }
         }
       }
