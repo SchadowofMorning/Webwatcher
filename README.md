@@ -1,4 +1,5 @@
 # Webwatcher
+[![Build Status](https://travis-ci.org/SchadowofMorning/Webwatcher.svg?branch=master)](https://travis-ci.org/SchadowofMorning/Webwatcher)
 ## a application for checking websites
 
 Something I coded that could be useful to check websites, for (job)applications, release dates, events etc.
