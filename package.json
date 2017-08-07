@@ -30,6 +30,13 @@
     "then-request": "^4.1.0"
   },
   "build": {
-    "appId": "de.pauloldenburg.webwatcher"
+    "appId": "de.pauloldenburg.webwatcher",
+    "files":[
+      "webapp/",
+      "node_modules",
+      "package.json",
+      "main.js",
+      "dist/"
+    ]
   }
 }
