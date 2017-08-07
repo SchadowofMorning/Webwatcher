@@ -15,7 +15,12 @@
   "devDependencies": {
     "electron": "~1.6.2",
     "electron-builder": "^19.19.1",
-    "electron-packager": "^8.1.0"
+    "electron-packager": "^8.1.0",
+    "fs-jetpack": "^1.1.0",
+    "jquery": "^3.2.1",
+    "nedb": "^1.8.0",
+    "request": "^2.81.0",
+    "then-request": "^4.1.0"
   },
   "dependencies": {
     "fs-jetpack": "^1.1.0",
